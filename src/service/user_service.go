@@ -12,32 +12,21 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserService interface {
-	GetUsers(c *fiber.Ctx, params *validation.QueryUser) ([]model.User, int64, error)
-	GetUserByID(c *fiber.Ctx, id string) (*model.User, error)
-	GetUserByEmail(c *fiber.Ctx, email string) (*model.User, error)
-	CreateUser(c *fiber.Ctx, req *validation.CreateUser) (*model.User, error)
-	UpdatePassOrVerify(c *fiber.Ctx, req *validation.UpdatePassOrVerify, id string) error
-	UpdateUser(c *fiber.Ctx, req *validation.UpdateUser, id string) (*model.User, error)
-	DeleteUser(c *fiber.Ctx, id string) error
-	CreateGoogleUser(c *fiber.Ctx, req *validation.GoogleLogin) (*model.User, error)
-}
-
-type userService struct {
+type UserService struct {
 	Log      *logrus.Logger
 	DB       *gorm.DB
 	Validate *validator.Validate
 }
 
-func NewUserService(db *gorm.DB, validate *validator.Validate) UserService {
-	return &userService{
+func NewUserService(db *gorm.DB, validate *validator.Validate) *UserService {
+	return &UserService{
 		Log:      utils.Log,
 		DB:       db,
 		Validate: validate,
 	}
 }
 
-func (s *userService) GetUsers(c *fiber.Ctx, params *validation.QueryUser) ([]model.User, int64, error) {
+func (s *UserService) GetUsers(c *fiber.Ctx, params *validation.QueryUser) ([]model.User, int64, error) {
 	var users []model.User
 	var totalResults int64
 
@@ -68,7 +57,7 @@ func (s *userService) GetUsers(c *fiber.Ctx, params *validation.QueryUser) ([]mo
 	return users, totalResults, result.Error
 }
 
-func (s *userService) GetUserByID(c *fiber.Ctx, id string) (*model.User, error) {
+func (s *UserService) GetUserByID(c *fiber.Ctx, id string) (*model.User, error) {
 	user := new(model.User)
 
 	result := s.DB.WithContext(c.Context()).First(user, "id = ?", id)
@@ -84,7 +73,7 @@ func (s *userService) GetUserByID(c *fiber.Ctx, id string) (*model.User, error) 
 	return user, result.Error
 }
 
-func (s *userService) GetUserByEmail(c *fiber.Ctx, email string) (*model.User, error) {
+func (s *UserService) GetUserByEmail(c *fiber.Ctx, email string) (*model.User, error) {
 	user := new(model.User)
 
 	result := s.DB.WithContext(c.Context()).Where("email = ?", email).First(user)
@@ -100,7 +89,7 @@ func (s *userService) GetUserByEmail(c *fiber.Ctx, email string) (*model.User, e
 	return user, result.Error
 }
 
-func (s *userService) CreateUser(c *fiber.Ctx, req *validation.CreateUser) (*model.User, error) {
+func (s *UserService) CreateUser(c *fiber.Ctx, req *validation.CreateUser) (*model.User, error) {
 	if err := s.Validate.Struct(req); err != nil {
 		return nil, err
 	}
@@ -131,7 +120,7 @@ func (s *userService) CreateUser(c *fiber.Ctx, req *validation.CreateUser) (*mod
 	return user, result.Error
 }
 
-func (s *userService) UpdateUser(c *fiber.Ctx, req *validation.UpdateUser, id string) (*model.User, error) {
+func (s *UserService) UpdateUser(c *fiber.Ctx, req *validation.UpdateUser, id string) (*model.User, error) {
 	if err := s.Validate.Struct(req); err != nil {
 		return nil, err
 	}
@@ -176,7 +165,7 @@ func (s *userService) UpdateUser(c *fiber.Ctx, req *validation.UpdateUser, id st
 	return user, result.Error
 }
 
-func (s *userService) UpdatePassOrVerify(c *fiber.Ctx, req *validation.UpdatePassOrVerify, id string) error {
+func (s *UserService) UpdatePassOrVerify(c *fiber.Ctx, req *validation.UpdatePassOrVerify, id string) error {
 	if err := s.Validate.Struct(req); err != nil {
 		return err
 	}
@@ -211,7 +200,7 @@ func (s *userService) UpdatePassOrVerify(c *fiber.Ctx, req *validation.UpdatePas
 	return result.Error
 }
 
-func (s *userService) DeleteUser(c *fiber.Ctx, id string) error {
+func (s *UserService) DeleteUser(c *fiber.Ctx, id string) error {
 	user := new(model.User)
 
 	result := s.DB.WithContext(c.Context()).Delete(user, "id = ?", id)
@@ -227,7 +216,7 @@ func (s *userService) DeleteUser(c *fiber.Ctx, id string) error {
 	return result.Error
 }
 
-func (s *userService) CreateGoogleUser(c *fiber.Ctx, req *validation.GoogleLogin) (*model.User, error) {
+func (s *UserService) CreateGoogleUser(c *fiber.Ctx, req *validation.GoogleLogin) (*model.User, error) {
 	if err := s.Validate.Struct(req); err != nil {
 		return nil, err
 	}

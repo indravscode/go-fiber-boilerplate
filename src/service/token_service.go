@@ -16,26 +16,15 @@ import (
 	"gorm.io/gorm"
 )
 
-type TokenService interface {
-	GenerateToken(userID string, expires time.Time, tokenType string) (string, error)
-	SaveToken(c *fiber.Ctx, token, userID, tokenType string, expires time.Time) error
-	DeleteToken(c *fiber.Ctx, tokenType string, userID string) error
-	DeleteAllToken(c *fiber.Ctx, userID string) error
-	GetTokenByUserID(c *fiber.Ctx, tokenStr string) (*model.Token, error)
-	GenerateAuthTokens(c *fiber.Ctx, user *model.User) (*res.Tokens, error)
-	GenerateResetPasswordToken(c *fiber.Ctx, req *validation.ForgotPassword) (string, error)
-	GenerateVerifyEmailToken(c *fiber.Ctx, user *model.User) (*string, error)
-}
-
-type tokenService struct {
+type TokenService struct {
 	Log         *logrus.Logger
 	DB          *gorm.DB
 	Validate    *validator.Validate
-	UserService UserService
+	UserService *UserService
 }
 
-func NewTokenService(db *gorm.DB, validate *validator.Validate, userService UserService) TokenService {
-	return &tokenService{
+func NewTokenService(db *gorm.DB, validate *validator.Validate, userService *UserService) *TokenService {
+	return &TokenService{
 		Log:         utils.Log,
 		DB:          db,
 		Validate:    validate,
@@ -43,7 +32,7 @@ func NewTokenService(db *gorm.DB, validate *validator.Validate, userService User
 	}
 }
 
-func (s *tokenService) GenerateToken(userID string, expires time.Time, tokenType string) (string, error) {
+func (s *TokenService) GenerateToken(userID string, expires time.Time, tokenType string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub":  userID,
 		"iat":  time.Now().Unix(),
@@ -55,7 +44,7 @@ func (s *tokenService) GenerateToken(userID string, expires time.Time, tokenType
 	return token.SignedString([]byte(config.JWTSecret))
 }
 
-func (s *tokenService) SaveToken(c *fiber.Ctx, token, userID, tokenType string, expires time.Time) error {
+func (s *TokenService) SaveToken(c *fiber.Ctx, token, userID, tokenType string, expires time.Time) error {
 	if err := s.DeleteToken(c, tokenType, userID); err != nil {
 		return err
 	}
@@ -76,7 +65,7 @@ func (s *tokenService) SaveToken(c *fiber.Ctx, token, userID, tokenType string, 
 	return result.Error
 }
 
-func (s *tokenService) DeleteToken(c *fiber.Ctx, tokenType string, userID string) error {
+func (s *TokenService) DeleteToken(c *fiber.Ctx, tokenType string, userID string) error {
 	tokenDoc := new(model.Token)
 
 	result := s.DB.WithContext(c.Context()).
@@ -90,7 +79,7 @@ func (s *tokenService) DeleteToken(c *fiber.Ctx, tokenType string, userID string
 	return result.Error
 }
 
-func (s *tokenService) DeleteAllToken(c *fiber.Ctx, userID string) error {
+func (s *TokenService) DeleteAllToken(c *fiber.Ctx, userID string) error {
 	tokenDoc := new(model.Token)
 
 	result := s.DB.WithContext(c.Context()).Where("user_id = ?", userID).Delete(tokenDoc)
@@ -102,7 +91,7 @@ func (s *tokenService) DeleteAllToken(c *fiber.Ctx, userID string) error {
 	return result.Error
 }
 
-func (s *tokenService) GetTokenByUserID(c *fiber.Ctx, tokenStr string) (*model.Token, error) {
+func (s *TokenService) GetTokenByUserID(c *fiber.Ctx, tokenStr string) (*model.Token, error) {
 	userID, err := utils.VerifyToken(tokenStr, config.JWTSecret, config.TokenTypeRefresh)
 	if err != nil {
 		return nil, err
@@ -122,7 +111,7 @@ func (s *tokenService) GetTokenByUserID(c *fiber.Ctx, tokenStr string) (*model.T
 	return tokenDoc, nil
 }
 
-func (s *tokenService) GenerateAuthTokens(c *fiber.Ctx, user *model.User) (*res.Tokens, error) {
+func (s *TokenService) GenerateAuthTokens(c *fiber.Ctx, user *model.User) (*res.Tokens, error) {
 	accessTokenExpires := time.Now().UTC().Add(time.Minute * time.Duration(config.JWTAccessExp))
 	accessToken, err := s.GenerateToken(user.ID.String(), accessTokenExpires, config.TokenTypeAccess)
 	if err != nil {
@@ -153,7 +142,7 @@ func (s *tokenService) GenerateAuthTokens(c *fiber.Ctx, user *model.User) (*res.
 	}, nil
 }
 
-func (s *tokenService) GenerateResetPasswordToken(c *fiber.Ctx, req *validation.ForgotPassword) (string, error) {
+func (s *TokenService) GenerateResetPasswordToken(c *fiber.Ctx, req *validation.ForgotPassword) (string, error) {
 	if err := s.Validate.Struct(req); err != nil {
 		return "", err
 	}
@@ -177,7 +166,7 @@ func (s *tokenService) GenerateResetPasswordToken(c *fiber.Ctx, req *validation.
 	return resetPasswordToken, nil
 }
 
-func (s *tokenService) GenerateVerifyEmailToken(c *fiber.Ctx, user *model.User) (*string, error) {
+func (s *TokenService) GenerateVerifyEmailToken(c *fiber.Ctx, user *model.User) (*string, error) {
 	expires := time.Now().UTC().Add(time.Minute * time.Duration(config.JWTVerifyEmailExp))
 	verifyEmailToken, err := s.GenerateToken(user.ID.String(), expires, config.TokenTypeVerifyEmail)
 	if err != nil {

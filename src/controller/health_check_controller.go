@@ -8,12 +8,12 @@ import (
 )
 
 type HealthCheckController struct {
-	HealthCheckService service.HealthCheckService
+	healthCheckService *service.HealthCheckService
 }
 
-func NewHealthCheckController(healthCheckService service.HealthCheckService) *HealthCheckController {
+func NewHealthCheckController(healthCheckService *service.HealthCheckService) *HealthCheckController {
 	return &HealthCheckController{
-		HealthCheckService: healthCheckService,
+		healthCheckService,
 	}
 }
 
@@ -46,27 +46,23 @@ func (h *HealthCheckController) Check(c *fiber.Ctx) error {
 	isHealthy := true
 	var serviceList []response.HealthCheck
 
-	// Check the database connection
-	if err := h.HealthCheckService.GormCheck(); err != nil {
-		isHealthy = false
-		errMsg := err.Error()
-		h.addServiceStatus(&serviceList, "Postgre", false, &errMsg)
-	} else {
-		h.addServiceStatus(&serviceList, "Postgre", true, nil)
+	// Helper to run a health check, update status and add to list
+	checkStatus := func(name string, fn func() error) {
+		err := fn()
+		if err != nil {
+			isHealthy = false
+			errMsg := err.Error()
+			h.addServiceStatus(&serviceList, name, false, &errMsg)
+		} else {
+			h.addServiceStatus(&serviceList, name, true, nil)
+		}
 	}
 
-	if err := h.HealthCheckService.MemoryHeapCheck(); err != nil {
-		isHealthy = false
-		errMsg := err.Error()
-		h.addServiceStatus(&serviceList, "Memory", false, &errMsg)
-	} else {
-		h.addServiceStatus(&serviceList, "Memory", true, nil)
-	}
+	checkStatus("Postgre", h.healthCheckService.GormCheck)
+	checkStatus("Memory", h.healthCheckService.MemoryHeapCheck)
 
-	// Return the response based on health check result
 	statusCode := fiber.StatusOK
 	status := "success"
-
 	if !isHealthy {
 		statusCode = fiber.StatusInternalServerError
 		status = "error"

@@ -16,21 +16,21 @@ import (
 )
 
 type AuthController struct {
-	AuthService  service.AuthService
-	UserService  service.UserService
-	TokenService service.TokenService
-	EmailService service.EmailService
+	authService  *service.AuthService
+	userService  *service.UserService
+	tokenService *service.TokenService
+	emailService *service.EmailService
 }
 
 func NewAuthController(
-	authService service.AuthService, userService service.UserService,
-	tokenService service.TokenService, emailService service.EmailService,
+	authService *service.AuthService, userService *service.UserService,
+	tokenService *service.TokenService, emailService *service.EmailService,
 ) *AuthController {
 	return &AuthController{
-		AuthService:  authService,
-		UserService:  userService,
-		TokenService: tokenService,
-		EmailService: emailService,
+		authService,
+		userService,
+		tokenService,
+		emailService,
 	}
 }
 
@@ -49,12 +49,12 @@ func (a *AuthController) Register(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	user, err := a.AuthService.Register(c, req)
+	user, err := a.authService.Register(c, req)
 	if err != nil {
 		return err
 	}
 
-	tokens, err := a.TokenService.GenerateAuthTokens(c, user)
+	tokens, err := a.tokenService.GenerateAuthTokens(c, user)
 	if err != nil {
 		return err
 	}
@@ -84,12 +84,12 @@ func (a *AuthController) Login(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	user, err := a.AuthService.Login(c, req)
+	user, err := a.authService.Login(c, req)
 	if err != nil {
 		return err
 	}
 
-	tokens, err := a.TokenService.GenerateAuthTokens(c, user)
+	tokens, err := a.tokenService.GenerateAuthTokens(c, user)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func (a *AuthController) Logout(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	if err := a.AuthService.Logout(c, req); err != nil {
+	if err := a.authService.Logout(c, req); err != nil {
 		return err
 	}
 
@@ -146,7 +146,7 @@ func (a *AuthController) RefreshTokens(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	tokens, err := a.AuthService.RefreshAuth(c, req)
+	tokens, err := a.authService.RefreshAuth(c, req)
 	if err != nil {
 		return err
 	}
@@ -175,12 +175,12 @@ func (a *AuthController) ForgotPassword(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	resetPasswordToken, err := a.TokenService.GenerateResetPasswordToken(c, req)
+	resetPasswordToken, err := a.tokenService.GenerateResetPasswordToken(c, req)
 	if err != nil {
 		return err
 	}
 
-	if errEmail := a.EmailService.SendResetPasswordEmail(req.Email, resetPasswordToken); errEmail != nil {
+	if errEmail := a.emailService.SendResetPasswordEmail(req.Email, resetPasswordToken); errEmail != nil {
 		return errEmail
 	}
 
@@ -211,7 +211,7 @@ func (a *AuthController) ResetPassword(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	if err := a.AuthService.ResetPassword(c, query, req); err != nil {
+	if err := a.authService.ResetPassword(c, query, req); err != nil {
 		return err
 	}
 
@@ -234,12 +234,12 @@ func (a *AuthController) ResetPassword(c *fiber.Ctx) error {
 func (a *AuthController) SendVerificationEmail(c *fiber.Ctx) error {
 	user, _ := c.Locals("user").(*model.User)
 
-	verifyEmailToken, err := a.TokenService.GenerateVerifyEmailToken(c, user)
+	verifyEmailToken, err := a.tokenService.GenerateVerifyEmailToken(c, user)
 	if err != nil {
 		return err
 	}
 
-	if errEmail := a.EmailService.SendVerificationEmail(user.Email, *verifyEmailToken); errEmail != nil {
+	if errEmail := a.emailService.SendVerificationEmail(user.Email, *verifyEmailToken); errEmail != nil {
 		return errEmail
 	}
 
@@ -263,7 +263,7 @@ func (a *AuthController) VerifyEmail(c *fiber.Ctx) error {
 		Token: c.Query("token"),
 	}
 
-	if err := a.AuthService.VerifyEmail(c, query); err != nil {
+	if err := a.authService.VerifyEmail(c, query); err != nil {
 		return err
 	}
 
@@ -336,12 +336,12 @@ func (a *AuthController) GoogleCallback(c *fiber.Ctx) error {
 		return errJSON
 	}
 
-	user, err := a.UserService.CreateGoogleUser(c, googleUser)
+	user, err := a.userService.CreateGoogleUser(c, googleUser)
 	if err != nil {
 		return err
 	}
 
-	tokens, err := a.TokenService.GenerateAuthTokens(c, user)
+	tokens, err := a.tokenService.GenerateAuthTokens(c, user)
 	if err != nil {
 		return err
 	}

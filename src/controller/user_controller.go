@@ -12,14 +12,14 @@ import (
 )
 
 type UserController struct {
-	UserService  service.UserService
-	TokenService service.TokenService
+	userService  *service.UserService
+	tokenService *service.TokenService
 }
 
-func NewUserController(userService service.UserService, tokenService service.TokenService) *UserController {
+func NewUserController(userService *service.UserService, tokenService *service.TokenService) *UserController {
 	return &UserController{
-		UserService:  userService,
-		TokenService: tokenService,
+		userService,
+		tokenService,
 	}
 }
 
@@ -42,7 +42,7 @@ func (u *UserController) GetUsers(c *fiber.Ctx) error {
 		Search: c.Query("search", ""),
 	}
 
-	users, totalResults, err := u.UserService.GetUsers(c, query)
+	users, totalResults, err := u.userService.GetUsers(c, query)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (u *UserController) GetUserByID(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid user ID")
 	}
 
-	user, err := u.UserService.GetUserByID(c, userID)
+	user, err := u.userService.GetUserByID(c, userID)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func (u *UserController) CreateUser(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	user, err := u.UserService.CreateUser(c, req)
+	user, err := u.userService.CreateUser(c, req)
 	if err != nil {
 		return err
 	}
@@ -149,7 +149,7 @@ func (u *UserController) UpdateUser(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	user, err := u.UserService.UpdateUser(c, req, userID)
+	user, err := u.userService.UpdateUser(c, req, userID)
 	if err != nil {
 		return err
 	}
@@ -181,11 +181,11 @@ func (u *UserController) DeleteUser(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid user ID")
 	}
 
-	if err := u.TokenService.DeleteAllToken(c, userID); err != nil {
+	if err := u.tokenService.DeleteAllToken(c, userID); err != nil {
 		return err
 	}
 
-	if err := u.UserService.DeleteUser(c, userID); err != nil {
+	if err := u.userService.DeleteUser(c, userID); err != nil {
 		return err
 	}
 

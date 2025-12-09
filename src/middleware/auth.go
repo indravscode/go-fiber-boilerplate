@@ -9,7 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func Auth(userService service.UserService, requiredRights ...string) fiber.Handler {
+func Auth(userService *service.UserService, requiredRights ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
 		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
