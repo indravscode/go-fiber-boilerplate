@@ -512,7 +512,7 @@ info:
     name: MIT
     url: https://github.com/indrayyana/go-fiber-boilerplate/blob/main/LICENSE
   title: go-fiber-boilerplate API documentation
-  version: 1.0.0
+  version: 1.3.1
 paths:
   /auth/forgot-password:
     post:

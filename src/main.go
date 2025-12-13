@@ -20,7 +20,7 @@ import (
 )
 
 // @title go-fiber-boilerplate API documentation
-// @version 1.0.0
+// @version 1.3.1
 // @license.name MIT
 // @license.url https://github.com/indrayyana/go-fiber-boilerplate/blob/main/LICENSE
 // @host localhost:3000
