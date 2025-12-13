@@ -110,6 +110,19 @@ make testsum
 make tests-TestUserModel
 ```
 
+> [!IMPORTANT]
+> Tests use a **separate test database**.
+>
+> By default, the test database name is defined in:
+> `test/init.go`
+>
+> ```go
+> DB = database.Connect("localhost", "testdb")
+> ```
+>
+> Make sure the test database (`testdb`) **already exists** and all required
+> tables (`users`, `tokens`, etc.) have been migrated before running the test commands.
+
 Docker:
 
 ```bash

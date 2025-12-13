@@ -25,10 +25,10 @@ migrate-docker-down:
 	@docker run -v ./src/database/migrations:/migrations --network go-fiber-boilerplate_go-network migrate/migrate -path=/migrations/ -database postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable down -all
 docker:
 	@chmod -R 755 ./src/database/init
-	@docker-compose up --build
+	@docker compose up --build
 docker-test:
-	@docker-compose up -d && make tests
+	@docker compose up -d && make tests
 docker-down:
-	@docker-compose down --rmi all --volumes --remove-orphans
+	@docker compose down --rmi all --volumes --remove-orphans
 docker-cache:
 	@docker builder prune -f

@@ -1,4 +1,4 @@
-FROM golang:1.22 AS build
+FROM golang:1.25 AS build
 
 WORKDIR /app
 COPY . .
@@ -8,7 +8,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build src/main.go
 
 FROM alpine:latest
 
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl tzdata
 
 WORKDIR /root
 COPY --from=build /app/main .

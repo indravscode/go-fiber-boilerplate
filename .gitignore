@@ -7,3 +7,4 @@ tmp/
 
 lint.txt
 main
+bin/golangci-lint
